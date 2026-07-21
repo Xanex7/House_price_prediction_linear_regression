@@ -31,18 +31,21 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ValuatX AI | Real Estate Valuation Engine</title>
-    <!-- Google Fonts & FontAwesome -->
+    <title>ValuatX AI | Enterprise Real Estate Valuation Engine</title>
+    <!-- Google Fonts & FontAwesome & jsPDF -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         :root {
             --bg-void: #030712;
-            --card-glass: rgba(15, 23, 42, 0.75);
+            --card-glass: rgba(15, 23, 42, 0.78);
             --card-border: rgba(255, 255, 255, 0.08);
             --cyan-glow: #00f2fe;
             --violet-glow: #7928ca;
+            --emerald-glow: #10b981;
+            --rose-glow: #f43f5e;
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
             --input-bg: rgba(3, 7, 18, 0.65);
@@ -67,12 +70,12 @@ HTML_TEMPLATE = """
 
         .ambient-orb {
             position: fixed;
-            width: 600px;
-            height: 600px;
+            width: 650px;
+            height: 650px;
             border-radius: 50%;
-            filter: blur(140px);
+            filter: blur(150px);
             z-index: -1;
-            opacity: 0.25;
+            opacity: 0.22;
             pointer-events: none;
         }
         .orb-cyan { top: -200px; right: -100px; background: var(--cyan-glow); }
@@ -124,7 +127,7 @@ HTML_TEMPLATE = """
         }
 
         .workspace-container {
-            max-width: 1400px;
+            max-width: 1440px;
             margin: 35px auto;
             padding: 0 4%;
             width: 100%;
@@ -170,15 +173,14 @@ HTML_TEMPLATE = """
         /* Workspace Grid */
         .grid-layout {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1.85fr 1.15fr;
             gap: 32px;
             align-items: start;
         }
 
-        /* STICKY SIDEBAR PROPERTY TO FIX SCROLLING ISSUE */
         .sticky-sidebar {
             position: sticky;
-            top: 110px; /* Sticks right below the navbar */
+            top: 110px;
             z-index: 10;
         }
 
@@ -189,19 +191,20 @@ HTML_TEMPLATE = """
             padding: 36px;
             backdrop-filter: blur(24px);
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+            margin-bottom: 24px;
         }
 
         .section-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             padding-bottom: 16px;
             border-bottom: 1px solid var(--card-border);
         }
 
         .section-title {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 700;
             display: flex;
             align-items: center;
@@ -308,7 +311,6 @@ HTML_TEMPLATE = """
             justify-content: center;
             gap: 12px;
             box-shadow: 0 10px 30px rgba(0, 242, 254, 0.25);
-            letter-spacing: 0.5px;
         }
 
         .btn-predict:hover {
@@ -318,23 +320,21 @@ HTML_TEMPLATE = """
         }
 
         .valuation-card {
-            background: linear-gradient(180deg, rgba(121, 40, 202, 0.15) 0%, rgba(0, 242, 254, 0.05) 100%);
-            border: 1px solid rgba(0, 242, 254, 0.3);
+            background: linear-gradient(180deg, rgba(121, 40, 202, 0.18) 0%, rgba(0, 242, 254, 0.05) 100%);
+            border: 1px solid rgba(0, 242, 254, 0.35);
             border-radius: 20px;
-            padding: 30px;
+            padding: 28px;
             text-align: center;
             position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
         }
 
         .val-tag {
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             text-transform: uppercase;
             letter-spacing: 2px;
             color: var(--text-sub);
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .val-price {
@@ -342,39 +342,105 @@ HTML_TEMPLATE = """
             font-size: 2.5rem;
             font-weight: 800;
             color: #ffffff;
-            margin: 10px 0;
+            margin: 6px 0;
             background: linear-gradient(to right, #00f2fe, #ffffff);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
+        .range-sub {
+            font-size: 0.85rem;
+            color: var(--cyan-glow);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
         .feature-badge-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 24px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
         }
 
         .f-badge {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--card-border);
             border-radius: 12px;
-            padding: 12px;
-            text-align: left;
+            padding: 10px;
+            text-align: center;
         }
 
         .f-badge-title {
-            font-size: 0.72rem;
+            font-size: 0.68rem;
             color: var(--text-sub);
             text-transform: uppercase;
         }
 
         .f-badge-val {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 700;
             color: var(--cyan-glow);
             margin-top: 4px;
+        }
+
+        /* What-If Sliders Section */
+        .simulator-box {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--card-border);
+        }
+
+        .sim-row {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .sim-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .sim-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #cbd5e1;
+        }
+
+        input[type="range"] {
+            accent-color: var(--cyan-glow);
+            cursor: pointer;
+            padding: 0;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-report {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s ease;
+        }
+
+        .btn-report:hover {
+            background: rgba(0, 242, 254, 0.12);
+            border-color: var(--cyan-glow);
+            color: var(--cyan-glow);
         }
 
         .spinner {
@@ -403,7 +469,7 @@ HTML_TEMPLATE = """
         @media (max-width: 1024px) {
             .grid-layout { grid-template-columns: 1fr; }
             .form-grid { grid-template-columns: repeat(2, 1fr); }
-            .sticky-sidebar { position: static; } /* Reverts to normal flow on mobile */
+            .sticky-sidebar { position: static; }
         }
 
         @media (max-width: 640px) {
@@ -431,8 +497,8 @@ HTML_TEMPLATE = """
 
 <div class="workspace-container">
     <div class="header-section">
-        <span class="title-badge">Real Estate Valuation</span>
-        <h1 class="main-title">Automated Valuation Model</h1>
+        <span class="title-badge">Real Estate Valuation Platform</span>
+        <h1 class="main-title">Automated Valuation Engine</h1>
         <p class="main-subtitle">Synthesize 16 architectural, regional, and temporal parameters into an instant real-time market value estimate.</p>
     </div>
 
@@ -466,7 +532,7 @@ HTML_TEMPLATE = """
 
                     <div class="form-group">
                         <label>Living Area (sqft)</label>
-                        <input type="number" name="living area" value="2570" min="100" required>
+                        <input type="number" id="inputLiving" name="living area" value="2570" min="100" required>
                     </div>
 
                     <div class="form-group">
@@ -530,12 +596,12 @@ HTML_TEMPLATE = """
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Built Year</label>
-                        <input type="number" name="Built Year" value="1951" min="1800" max="2026" required>
+                        <input type="number" id="builtYearInput" name="Built Year" value="1999" min="1800" max="2026" required oninput="updateBuildAge(this.value)">
                     </div>
 
                     <div class="form-group">
                         <label>Renovation Year</label>
-                        <input type="number" name="Renovation Year" value="1991" min="0" max="2026" required>
+                        <input type="number" name="Renovation Year" value="2015" min="0" max="2026" required>
                     </div>
 
                     <div class="form-group">
@@ -566,19 +632,49 @@ HTML_TEMPLATE = """
                 <div class="valuation-card">
                     <div class="val-tag">Estimated Asset Value</div>
                     <div class="val-price" id="priceDisplay">$0.00</div>
-                    <p style="font-size: 0.8rem; color: var(--text-sub);">Calculated using ordinary least squares (OLS) linear model weight vector.</p>
+                    <div class="range-sub" id="priceRange">Range: $0 – $0</div>
+
+                    <div class="feature-badge-grid">
+                        <div class="f-badge">
+                            <div class="f-badge-title">SqFt Price</div>
+                            <div class="f-badge-val" id="badgeSqft">$0 / sqft</div>
+                        </div>
+                        <div class="f-badge">
+                            <div class="f-badge-title">Primary Area</div>
+                            <div class="f-badge-val" id="badgeLiving">2,570 sqft</div>
+                        </div>
+                        <div class="f-badge">
+                            <div class="f-badge-title">Build Age</div>
+                            <div class="f-badge-val" id="badgeAge">27 Yrs</div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="feature-badge-grid">
-                    <div class="f-badge">
-                        <div class="f-badge-title">Primary Area</div>
-                        <div class="f-badge-val" id="badgeLiving">2,570 sqft</div>
-                    </div>
-                    <div class="f-badge">
-                        <div class="f-badge-title">Build Age</div>
-                        <div class="f-badge-val" id="badgeAge">75 Yrs</div>
+                <!-- Live What-If Simulator -->
+                <div class="simulator-box">
+                    <div class="sub-group-title" style="margin: 0 0 12px 0;"><i class="fa-solid fa-wand-magic-sparkles"></i> "What-If" Area Boost</div>
+                    <div class="sim-row">
+                        <div class="sim-header">
+                            <span>Adjust Area Delta: <strong id="simAreaLabel">+0 sqft</strong></span>
+                            <span id="simDeltaVal" style="color: var(--emerald-glow); font-weight: 700;">+$0</span>
+                        </div>
+                        <input type="range" id="simSlider" min="-500" max="1000" step="50" value="0" oninput="runWhatIfSimulation(this.value)">
                     </div>
                 </div>
+
+                <!-- Financial Insights -->
+                <div class="simulator-box" style="margin-top: 14px;">
+                    <div class="sub-group-title" style="margin: 0 0 10px 0;"><i class="fa-solid fa-calculator"></i> Est. Monthly Mortgage</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.8rem; color: var(--text-sub);">30-Yr Fixed @ 6.5%</span>
+                        <span style="font-family: 'JetBrains Mono'; font-weight: 700; color: var(--cyan-glow); font-size: 1.1rem;" id="mortgageVal">$0 / mo</span>
+                    </div>
+                </div>
+
+                <!-- Download Report Button -->
+                <button type="button" class="btn-report" onclick="downloadPDFReport()">
+                    <i class="fa-solid fa-file-pdf"></i> Download PDF Appraisal
+                </button>
             </div>
         </div>
 
@@ -590,6 +686,48 @@ HTML_TEMPLATE = """
 </footer>
 
 <script>
+    let basePrice = 0;
+
+    // Real-Time Build Age Calculator
+    function updateBuildAge(year) {
+        if (year && year > 0) {
+            const currentYear = 2026;
+            const age = currentYear - Number(year);
+            document.getElementById('badgeAge').textContent = Math.max(0, age) + ' Yrs';
+        }
+    }
+
+    // Interactive "What-If" Delta Simulator
+    function runWhatIfSimulation(deltaSqft) {
+        document.getElementById('simAreaLabel').textContent = (deltaSqft >= 0 ? '+' : '') + deltaSqft + ' sqft';
+        
+        if (basePrice > 0) {
+            // Assume ~$185 per additional sqft regression weight
+            let deltaValue = deltaSqft * 185;
+            let newPrice = Math.max(0, basePrice + deltaValue);
+            
+            document.getElementById('simDeltaVal').textContent = (deltaValue >= 0 ? '+$' : '-$') + Math.abs(Math.round(deltaValue)).toLocaleString();
+            document.getElementById('priceDisplay').textContent = '$' + newPrice.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
+            updateFinancials(newPrice);
+        }
+    }
+
+    function updateFinancials(price) {
+        // Mortgage formula: 30yr @ 6.5%, 20% down
+        let loanAmount = price * 0.8;
+        let monthlyRate = 0.065 / 12;
+        let numPayments = 360;
+        let monthlyPayment = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1);
+        
+        if (!isNaN(monthlyPayment) && monthlyPayment > 0) {
+            document.getElementById('mortgageVal').textContent = '$' + Math.round(monthlyPayment).toLocaleString() + ' / mo';
+        }
+    }
+
     document.getElementById('valuationForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -598,6 +736,8 @@ HTML_TEMPLATE = """
         const spinner = document.getElementById('btnSpinner');
         const btnText = submitBtn.querySelector('.btn-text');
         const priceDisplay = document.getElementById('priceDisplay');
+        const priceRange = document.getElementById('priceRange');
+        const badgeSqft = document.getElementById('badgeSqft');
         const outputSection = document.getElementById('outputSection');
         
         submitBtn.disabled = true;
@@ -607,7 +747,12 @@ HTML_TEMPLATE = """
         const livingArea = form.elements['living area'].value;
         const builtYear = form.elements['Built Year'].value;
         document.getElementById('badgeLiving').textContent = Number(livingArea).toLocaleString() + ' sqft';
-        document.getElementById('badgeAge').textContent = (2026 - Number(builtYear)) + ' Yrs';
+        updateBuildAge(builtYear);
+        
+        // Reset slider
+        document.getElementById('simSlider').value = 0;
+        document.getElementById('simAreaLabel').textContent = '+0 sqft';
+        document.getElementById('simDeltaVal').textContent = '+$0';
         
         const formData = new FormData(form);
         
@@ -626,13 +771,26 @@ HTML_TEMPLATE = """
             
             setTimeout(() => {
                 if (data.status === 'success') {
-                    let price = Number(data.prediction);
-                    priceDisplay.textContent = '$' + price.toLocaleString(undefined, {
+                    basePrice = Number(data.prediction);
+                    
+                    priceDisplay.textContent = '$' + basePrice.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
                     
-                    // Smoothly auto-scroll on smaller screens so you don't have to scroll up
+                    // Range +- 5%
+                    let minPrice = basePrice * 0.95;
+                    let maxPrice = basePrice * 1.05;
+                    priceRange.textContent = 'Est Range: $' + Math.round(minPrice).toLocaleString() + ' – $' + Math.round(maxPrice).toLocaleString();
+                    
+                    // SqFt Price
+                    if (Number(livingArea) > 0) {
+                        let pricePerSqft = basePrice / Number(livingArea);
+                        badgeSqft.textContent = '$' + pricePerSqft.toFixed(2) + ' / sqft';
+                    }
+                    
+                    updateFinancials(basePrice);
+                    
                     if (window.innerWidth <= 1024) {
                         outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
@@ -652,6 +810,43 @@ HTML_TEMPLATE = """
             priceDisplay.textContent = error.message;
         }
     });
+
+    // PDF Appraisal Exporter
+    function downloadPDFReport() {
+        if (basePrice <= 0) {
+            alert("Please calculate a valuation first before downloading a report.");
+            return;
+        }
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(20);
+        doc.text("ValuatX AI - Valuation Report", 20, 22);
+        
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Generated Date: " + new Date().toLocaleDateString() + " | Ref ID: #" + Math.floor(Math.random()*899999+100000), 20, 30);
+        
+        doc.line(20, 35, 190, 35);
+        
+        doc.setFontSize(14);
+        doc.setFont("helvetica", "bold");
+        doc.text("Estimated Market Value: $" + basePrice.toLocaleString(undefined, {minimumFractionDigits: 2}), 20, 48);
+        
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        doc.text("Primary Living Area: " + document.getElementById('inputLiving').value + " sqft", 20, 60);
+        doc.text("Build Age: " + document.getElementById('badgeAge').textContent, 20, 68);
+        doc.text("Price / SqFt: " + document.getElementById('badgeSqft').textContent, 20, 76);
+        
+        doc.line(20, 85, 190, 85);
+        doc.setFontSize(9);
+        doc.text("Disclaimer: Automated valuation model prediction powered by Ordinary Least Squares linear regression.", 20, 95);
+        
+        doc.save("ValuatX_Property_Appraisal.pdf");
+    }
 </script>
 
 </body>
