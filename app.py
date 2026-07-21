@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 # Load the Linear Regression pickle model safely
 MODEL_PATH = "model_linear_regression.pkl"
-SCALER_PATH = "scaler.pkl"  # Optional: set up if you scaled features during training
+SCALER_PATH = "scaler.pkl"
 
 try:
     with open(MODEL_PATH, "rb") as f:
@@ -17,17 +17,14 @@ except Exception as e:
     print(f"Error loading model: {e}")
     model = None
 
-# Load feature scaler if present
 scaler = None
 if os.path.exists(SCALER_PATH):
     try:
         with open(SCALER_PATH, "rb") as f:
             scaler = pickle.load(f)
-        print("Scaler loaded successfully.")
     except Exception as e:
         print(f"Error loading scaler: {e}")
 
-# High-Tech Cyberpunk Workspace Interface
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -91,7 +88,7 @@ HTML_TEMPLATE = """
             position: sticky;
             top: 0;
             z-index: 100;
-            background: rgba(3, 7, 18, 0.8);
+            background: rgba(3, 7, 18, 0.85);
         }
 
         .brand {
@@ -170,11 +167,19 @@ HTML_TEMPLATE = """
             margin: 0 auto;
         }
 
+        /* Workspace Grid */
         .grid-layout {
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 32px;
             align-items: start;
+        }
+
+        /* STICKY SIDEBAR PROPERTY TO FIX SCROLLING ISSUE */
+        .sticky-sidebar {
+            position: sticky;
+            top: 110px; /* Sticks right below the navbar */
+            z-index: 10;
         }
 
         .glass-card {
@@ -320,6 +325,7 @@ HTML_TEMPLATE = """
             text-align: center;
             position: relative;
             overflow: hidden;
+            transition: all 0.3s ease;
         }
 
         .val-tag {
@@ -397,6 +403,7 @@ HTML_TEMPLATE = """
         @media (max-width: 1024px) {
             .grid-layout { grid-template-columns: 1fr; }
             .form-grid { grid-template-columns: repeat(2, 1fr); }
+            .sticky-sidebar { position: static; } /* Reverts to normal flow on mobile */
         }
 
         @media (max-width: 640px) {
@@ -431,6 +438,7 @@ HTML_TEMPLATE = """
 
     <div class="grid-layout">
         
+        <!-- Left: Form Inputs -->
         <div class="glass-card">
             <div class="section-header">
                 <span class="section-title"><i class="fa-solid fa-sliders"></i> Property Attributes</span>
@@ -548,7 +556,8 @@ HTML_TEMPLATE = """
             </form>
         </div>
 
-        <div>
+        <!-- Right: Sticky Valuation Sidebar -->
+        <div class="sticky-sidebar" id="outputSection">
             <div class="glass-card">
                 <div class="section-header">
                     <span class="section-title"><i class="fa-solid fa-chart-line"></i> Market Estimate</span>
@@ -589,6 +598,7 @@ HTML_TEMPLATE = """
         const spinner = document.getElementById('btnSpinner');
         const btnText = submitBtn.querySelector('.btn-text');
         const priceDisplay = document.getElementById('priceDisplay');
+        const outputSection = document.getElementById('outputSection');
         
         submitBtn.disabled = true;
         spinner.style.display = 'block';
@@ -621,6 +631,11 @@ HTML_TEMPLATE = """
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
+                    
+                    // Smoothly auto-scroll on smaller screens so you don't have to scroll up
+                    if (window.innerWidth <= 1024) {
+                        outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
                 } else {
                     priceDisplay.textContent = 'Error: ' + data.message;
                 }
@@ -628,7 +643,7 @@ HTML_TEMPLATE = """
                 submitBtn.disabled = false;
                 spinner.style.display = 'none';
                 btnText.textContent = 'Generate Valuation';
-            }, 450);
+            }, 400);
 
         } catch (error) {
             submitBtn.disabled = false;
@@ -653,7 +668,6 @@ def predict():
         return jsonify({'status': 'error', 'message': 'Linear Regression model file was not loaded on the server.'}), 500
         
     try:
-        # Build dictionary matching exact feature names from model metadata
         data_dict = {
             'number of bedrooms': [float(request.form['number of bedrooms'])],
             'number of bathrooms': [float(request.form['number of bathrooms'])],
@@ -673,19 +687,14 @@ def predict():
             'Distance from the airport': [float(request.form['Distance from the airport'])]
         }
         
-        # Convert to Pandas DataFrame
         features_df = pd.DataFrame(data_dict)
         
-        # Apply scaling if a scaler model exists
         if scaler is not None:
             input_data = scaler.transform(features_df)
         else:
             input_data = features_df
         
-        # Calculate raw linear regression price prediction
         prediction_val = float(model.predict(input_data)[0])
-        
-        # Guardrail safeguard: Ensure regression output never returns below zero
         prediction_val = max(0.0, prediction_val)
         
         return jsonify({
